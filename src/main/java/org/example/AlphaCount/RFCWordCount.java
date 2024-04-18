@@ -1,13 +1,5 @@
 package org.example.AlphaCount;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -25,7 +17,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RFCWordCount {
 
     private static String fetchFromUrl(String url) throws IOException, InterruptedException {
-        // Create an SSLContext with the trust manager
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
                     public void checkClientTrusted(X509Certificate[] chain, String authType) {
@@ -48,7 +39,6 @@ public class RFCWordCount {
             throw new RuntimeException(e);
         }
 
-        // Create an HttpClient that uses the custom SSLContext and follows redirects
         HttpClient client = HttpClient.newBuilder()
                 .sslContext(sslContext)
                 .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -58,10 +48,8 @@ public class RFCWordCount {
                 .uri(URI.create(url))
                 .build();
 
-        // Use the HttpClient instance you've created
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // Process the response
         System.out.println("Response code: " + response.statusCode());
         String responseBody = response.body();
         System.out.println("Response body: " + responseBody);
