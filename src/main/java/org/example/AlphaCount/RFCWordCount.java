@@ -12,7 +12,9 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+
 
 public class RFCWordCount {
 
@@ -50,30 +52,36 @@ public class RFCWordCount {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        System.out.println("Response code: " + response.statusCode());
+        //System.out.println("Response code: " + response.statusCode());
         String responseBody = response.body();
-        System.out.println("Response body: " + responseBody);
+     //   System.out.println("Response body: " + responseBody);
         return responseBody;
     }
 
     public static void main(String args[]) throws IOException, InterruptedException {
-        AtomicReference<Integer> count = new AtomicReference<>(0);
+        AtomicInteger ch = new AtomicInteger(0);
+        int[] freq = new int[26];
+        for( int i =0 ;i < 26; i++ ){
+            freq[i] = 0;
+        }
+        AtomicIntegerArray arr = new AtomicIntegerArray(freq);
+        long startTime = System.nanoTime();
 
         for (int i = 1 ; i <= 100; i++) {
             int finalI = i;
             String url = "https://www.rfc-editor.org/rfc/rfc" + finalI + ".txt";
             Thread thread = Thread.ofVirtual().start(() -> {
                 try {
-                    System.out.println("Started virtual thread to fetch");
+                   // System.out.println("Started virtual thread to fetch");
                     String rfcContent = fetchFromUrl(url);
 
                     for (char c : rfcContent.toCharArray()) {
                         if (Character.isLowerCase(c)) {
-                            count.getAndSet(count.get() + 1);
-                            System.out.println("Current count of words is : "+ count);
+                            int val = arr.get(c-'a');
+                            arr.set(c-'a', val+1);
                         }
                     }
-                    System.out.println("Completed fetching for current url");
+                 //   System.out.println("Completed fetching for current url");
                 } catch (IOException e) {
                     System.err.println("Error fetching RFC " + finalI + ": " + e.getMessage());
                     e.printStackTrace();
@@ -83,6 +91,15 @@ public class RFCWordCount {
             });
             thread.join();
         }
-        System.out.println("The count of all characters is: " + count);
+
+        long endTime = System.nanoTime();
+        long executionTime = (endTime - startTime) / 1000000;
+
+        System.out.println("The aggregated counting takes " + executionTime + "ms");
+
+        for( int i =0 ;i < 26 ; i++ ){
+            char curr = (char) ('a' + i);
+            System.out.println("Count of " + curr + " is :" + arr.get(i) );
+        }
     }
 }
